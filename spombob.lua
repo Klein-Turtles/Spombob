@@ -1,91 +1,76 @@
 -- 🧩 Load Rayfield UI
-local success, Rayfield = pcall(function() 
-    return loadstring(game:HttpGet('https://sirius.menu/rayfield'))() 
-end)
-
-if not success then warn("Gagal load Rayfield!") return end
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-    Name = "Zoo Premium: Kuddly Edition",
-    LoadingTitle = "Sniping Kuddly Baskets...",
+    Name = "Zoo Event Sniper: St. Patrick's",
+    LoadingTitle = "Bypassing Knit Controllers...",
     LoadingSubtitle = "by Tegar",
     ConfigurationSaving = {Enabled = false}
 })
 
--- 📑 Tab & Services
-local Tab = Window:CreateTab("Kuddly Sniper", nil)
+local Tab = Window:CreateTab("Event Shop", nil)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Knit = require(ReplicatedStorage.Packages.Knit)
 
--- Mencari Remote Knit (Sesuai jalur yang lu kasih tadi)
-local KnitPath = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index"):WaitForChild("acecateer_knit@1.7.2"):WaitForChild("knit"):WaitForChild("Services")
-local ShopService = KnitPath:FindFirstChild("ShopService") or KnitPath:FindFirstChild("ProductService")
-local PurchaseRE = ShopService and ShopService:WaitForChild("RE"):FindFirstChild("PurchaseItem")
-
-Tab:CreateSection("Target: Kuddly Basket")
-
--- 🛠️ Fungsi Eksekusi
-local function snipe(itemName)
-    if PurchaseRE then
-        PurchaseRE:FireServer(itemName)
-        Rayfield:Notify({
-            Title = "Request Sent",
-            Content = "Mencoba beli: " .. itemName,
-            Duration = 2
-        })
+-- 🛠️ Fungsi Eksekusi Knit Service
+local function eventBuy(itemName)
+    -- Kita coba cari Service yang menangani event ini
+    -- Biasanya namanya StPatricksService atau EventService
+    local TargetService = Knit.GetService("StPatricksService") or Knit.GetService("EventService") or Knit.GetService("ShopService")
+    
+    if TargetService then
+        -- Di Knit, method server dipanggil lewat RE atau RF
+        -- Kita tembak fungsi "Purchase" atau "Buy"
+        pcall(function()
+            -- Coba panggil method "PurchaseItem" (standar Knit)
+            TargetService.PurchaseItem:Fire(itemName)
+            Rayfield:Notify({Title = "Sent", Content = "Target: " .. itemName, Duration = 2})
+        end)
     else
-        Rayfield:Notify({
-            Title = "Error",
-            Content = "Remote PurchaseItem tidak ditemukan!",
-            Duration = 5
-        })
+        Rayfield:Notify({Title = "Error", Content = "Service Event gak ketemu!", Duration = 5})
     end
 end
 
--- 🛒 Tombol x1
+Tab:CreateSection("Event Items (St. Patrick's 2026)")
+
+-- Tombol Sniper (Sesuai tebakan ID lu)
 Tab:CreateButton({
-    Name = "🎁 Buy Kuddly Basket x1",
+    Name = "🍀 Buy Kuddly Basket x1",
     Callback = function()
-        snipe("KuddlyBasket") -- Coba tanpa suffix
-        snipe("KuddlyBasket_x1") -- Fallback 1
-        snipe("KuddlyBasketx1") -- Fallback 2
+        eventBuy("KuddlyBasket")
+        eventBuy("KuddlyBasket_x1")
     end,
 })
 
--- 🛒 Tombol x3
 Tab:CreateButton({
-    Name = "📦 Buy Kuddly Basket x3",
+    Name = "🍀 Buy Kuddly Basket x3",
     Callback = function()
-        snipe("KuddlyBasket_x3")
-        snipe("KuddlyBasketx3")
+        eventBuy("KuddlyBasket_x3")
+        eventBuy("KuddlyBasketx3")
     end,
 })
 
--- 🛒 Tombol x5
-Tab:CreateButton({
-    Name = "🚚 Buy Kuddly Basket x5",
-    Callback = function()
-        snipe("KuddlyBasket_x5")
-        snipe("KuddlyBasketx5")
+Tab:CreateSection("Manual ID Input")
+Tab:CreateInput({
+    Name = "Custom Event ID",
+    PlaceholderText = "KuddlyBasket_x5...",
+    Callback = function(Text)
+        eventBuy(Text)
     end,
 })
 
-Tab:CreateSection("Experimental")
+-- 🔍 ANALYTIC BYPASS
+-- Biar gak kedetect "ShopInteraction" yang tadi lu kasih
+local AnalyticRE = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index"):WaitForChild("acecateer_knit@1.7.2"):WaitForChild("knit"):WaitForChild("Services"):WaitForChild("AnalyticReportService"):WaitForChild("RE"):WaitForChild("ShopInteraction")
 
--- Tombol Spam (Biar RMT makin kenceng)
 Tab:CreateToggle({
-    Name = "⚡ Auto Buy x1 (Spam)",
-    CurrentValue = false,
+    Name = "Ghost Mode (Spoof Analytics)",
+    CurrentValue = true,
     Callback = function(Value)
-        _G.AutoBuy = Value
-        while _G.AutoBuy do
-            snipe("KuddlyBasket")
-            task.wait(1.5) -- Kasih delay biar nggak kena ban/kick
+        _G.GhostMode = Value
+        if Value then
+            -- Ini bakal ngirim log palsu ke dev seolah-olah lu cuma "pencet UI"
+            AnalyticRE:FireServer("ShopItemClicked", "KuddlyBasket")
         end
     end,
-})
-
-Rayfield:Notify({
-    Title = "Ready!",
-    Content = "Script siap dipakai buat nyari cuan RMT!",
-    Duration = 5
 })
